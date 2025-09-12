@@ -5,6 +5,7 @@ import { conn } from "./config/sequelize.js"
 // TABELAS
 
 // ROTAS
+import chefRoute from "./routes/chefRoute.js"
 
 conn
     .sync()
@@ -25,5 +26,6 @@ app.use(cors({
 app.use(express.json())
 
 // USAR/REGISTRAR AS ROTAS
+app.use("/api/chefs", chefRoute)
 
 export default app

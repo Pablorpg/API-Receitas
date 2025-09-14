@@ -14,7 +14,3 @@ chefModel.belongsToMany(receitasModel, {
   otherKey: "receitaId",
   as: "receitas",
 });
-
-(async () => {
-  await conn.sync({ force: false });
-})();

@@ -67,10 +67,58 @@ export const criarReceita = async (request, response) => {
 
 export const listarReceitas = async (request, response) => {
     try {
-        const { chef, page = 1, limit = 10 } = request.query
+        const {
+            chef,
+            titulo,
+            dificuldade,
+            tempoPreparoMin,
+            tempoPreparoMax,
+            porcoesMin,
+            porcoesMax,
+            q,
+            page = 1,
+            limit = 10,
+        } = request.query
+
         const offset = (page - 1) * limit
 
         const where = {}
+
+        if (titulo) {
+            where.titulo = { [Op.iLike]: `%${titulo}%` }
+        }
+
+        if (dificuldade) {
+            where.dificuldade = dificuldade
+        }
+
+        if (tempoPreparoMin || tempoPreparoMax) {
+            where.tempoPreparo = {}
+            if (tempoPreparoMin) {
+                where.tempoPreparo[Op.gte] = parseInt(tempoPreparoMin)
+            }
+            if (tempoPreparoMax) {
+                where.tempoPreparo[Op.lte] = parseInt(tempoPreparoMax)
+            }
+        }
+
+        if (porcoesMin || porcoesMax) {
+            where.porcoes = {}
+            if (porcoesMin) {
+                where.porcoes[Op.gte] = parseInt(porcoesMin)
+            }
+            if (porcoesMax) {
+                where.porcoes[Op.lte] = parseInt(porcoesMax)
+            }
+        }
+
+        if (q) {
+            where[Op.or] = [
+                { titulo: { [Op.iLike]: `%${q}%` } },
+                { descricao: { [Op.iLike]: `%${q}%` } },
+            ]
+        }
+
         const include = [
             {
                 model: chefModel,

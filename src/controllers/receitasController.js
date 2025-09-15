@@ -348,3 +348,44 @@ export const deletarReceita = async (request, response) => {
         response.status(500).json({ message: "Erro ao deletar receita", error: error.message })
     }
 }
+
+export const uploadImagem = async (request, response) => {
+    try {
+        const { id } = request.params
+        if (!id) {
+            return response
+                .status(400)
+                .json({ erro: "Id inválido", mensagem: "Id não encontrado ou incorreto" })
+        }
+
+        const receita = await receitasModel.findByPk(id, {
+            include: [{ model: chefModel, as: "chefs", attributes: ["id"] }]
+        })
+        if (!receita) {
+            return response
+                .status(404)
+                .json({ erro: "Receita não encontrada", mensagem: "Receita não encontrada" })
+        }
+
+        if (!request.file) {
+            return response
+                .status(400)
+                .json({ erro: "Imagem não fornecida", mensagem: "Nenhuma imagem foi enviada" })
+        }
+
+        const imagemPrato = request.file.filename
+        const imagemUrl = `/public/receitas/${imagemPrato}`
+
+        await receita.update({ imagemPrato, imagemUrl })
+
+        const receitaAtualizada = await receitasModel.findByPk(id, {
+            include: [{ model: chefModel, as: "chefs", attributes: ["id"] }]
+        })
+
+        response
+            .status(200)
+            .json({ mensagem: `Imagem da receita ${receita.titulo} atualizada com sucesso`, receita: receitaAtualizada })
+    } catch (error) {
+        response.status(400).json({ erro: "Erro ao fazer upload da imagem", mensagem: error.message })
+    }
+}

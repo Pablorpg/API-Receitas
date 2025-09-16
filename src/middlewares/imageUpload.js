@@ -4,12 +4,13 @@ import { imageStorage } from "../config/multer.js"
 export const imageUpload = multer({
     storage: imageStorage,
     fileFilter: (request, file, cb) => {
-        if (!file.originalname.match(/\.(png|jpg|jpeg|webp)$/i)) {
-            return cb(new Error("Por favor, envie apenas jpg, jpeg, png ou webp"))
+        const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"]
+        if (!allowedTypes.includes(file.mimetype)) {
+            return cb(new Error("Formato inválido. Envie apenas jpg, jpeg, png ou webp"))
         }
         cb(null, true)
     },
     limits: {
-        fileSize: 5 * 1024 * 1024
+        fileSize: 5 * 1024 * 1024,
     }
 })

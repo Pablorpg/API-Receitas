@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
 import { conn } from "./config/sequelize.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
 
 // TABELAS
 import "./models/association.js";
@@ -18,9 +20,16 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Configuração para servir arquivos estáticos (imagens)
+const __dirname = path.resolve();
+app.use("/imagens", express.static(path.join(__dirname, "src/public/imagens")));
+
 // USAR/REGISTRAR AS ROTAS
 app.use("/api/chefs", chefRoute);
 app.use("/api/receitas", receitasRoutes);
+
+// Middleware de erros
+app.use(errorHandler);
 
 // Sincronizar o banco de dados
 conn

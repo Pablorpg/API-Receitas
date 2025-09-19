@@ -10,6 +10,7 @@ import "./models/association.js";
 // ROTAS
 import chefRoute from "./routes/chefRoute.js";
 import receitasRoutes from "./routes/receitasRoute.js";
+import usuarioRoute from "./routes/usuarioRoute.js"
 
 const app = express();
 
@@ -20,13 +21,14 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Configuração para servir arquivos estáticos (imagens)
+// Configuração para servir arquivos estáticos
 const __dirname = path.resolve();
 app.use("/imagens", express.static(path.join(__dirname, "src/public/imagens")));
 
 // USAR/REGISTRAR AS ROTAS
 app.use("/api/chefs", chefRoute);
 app.use("/api/receitas", receitasRoutes);
+app.use("/api/usuarios", usuarioRoute)
 
 // Middleware de erros
 app.use(errorHandler);

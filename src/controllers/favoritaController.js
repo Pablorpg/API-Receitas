@@ -1,5 +1,7 @@
 import favoritaModel from "../models/favoritaModel.js"
 import receitasModel from "../models/receitasModel.js"
+import usuarioModel from "../models/usuarioModel.js"
+import { Sequelize } from "sequelize"
 
 export const adicionarFavorita = async (request, response) => {
     try {
@@ -206,5 +208,88 @@ export const buscarFavoritaPorId = async (request, response) => {
         })
     } catch (error) {
         response.status(500).json({ erro: "Erro ao buscar favorita", mensagem: error.message })
+    }
+}
+
+export const listarTodasFavoritas = async (request, response) => {
+    try {
+        const favoritas = await favoritaModel.findAll({
+            include: [
+                {
+                    model: receitasModel,
+                    attributes: ["id", "titulo", "ingredientes", "instrucoes", "chefId", "usuarioId"]
+                },
+                {
+                    model: usuarioModel,
+                    attributes: ["id", "nome", "email", "tipoUsuario"]
+                }
+            ]
+        })
+
+        response.status(200).json({
+            success: true,
+            data: favoritas.map(favorita => ({
+                id: favorita.id,
+                usuario: {
+                    id: favorita.usuario.id,
+                    nome: favorita.usuario.nome,
+                    email: favorita.usuario.email,
+                    tipoUsuario: favorita.usuario.tipoUsuario
+                },
+                receita: {
+                    id: favorita.receita.id,
+                    titulo: favorita.receita.titulo,
+                    ingredientes: favorita.receita.ingredientes,
+                    instrucoes: favorita.receita.instrucoes,
+                    chefId: favorita.receita.chefId,
+                    usuarioId: favorita.receita.usuarioId
+                },
+                dataAdicionada: favorita.dataAdicionada,
+                categoria: favorita.categoria,
+                observacoes: favorita.observacoes,
+                prioridade: favorita.prioridade,
+                tentativasPreparo: favorita.tentativasPreparo,
+                created_at: favorita.created_at,
+                updated_at: favorita.updated_at
+            }))
+        })
+    } catch (error) {
+        response.status(500).json({ erro: "Erro ao listar todas as favoritas", mensagem: error.message })
+    }
+}
+
+export const estatisticasFavoritas = async (request, response) => {
+    try {
+        const estatisticas = await favoritaModel.findAll({
+            attributes: [
+                "receitaId",
+                [Sequelize.fn("COUNT", Sequelize.col("receitaId")), "totalFavoritas"]
+            ],
+            include: [
+                {
+                    model: receitasModel,
+                    attributes: ["id", "titulo", "ingredientes", "instrucoes", "chefId", "usuarioId"]
+                }
+            ],
+            group: ["receitaId", "receita.id"],
+            order: [[Sequelize.literal("totalFavoritas"), "DESC"]]
+        })
+
+        response.status(200).json({
+            success: true,
+            data: estatisticas.map(estatistica => ({
+                receita: {
+                    id: estatistica.receita.id,
+                    titulo: estatistica.receita.titulo,
+                    ingredientes: estatistica.receita.ingredientes,
+                    instrucoes: estatistica.receita.instrucoes,
+                    chefId: estatistica.receita.chefId,
+                    usuarioId: estatistica.receita.usuarioId
+                },
+                totalFavoritas: parseInt(estatistica.getDataValue("totalFavoritas"))
+            }))
+        })
+    } catch (error) {
+        response.status(500).json({ erro: "Erro ao obter estatísticas", mensagem: error.message })
     }
 }

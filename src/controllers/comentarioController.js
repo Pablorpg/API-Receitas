@@ -283,3 +283,48 @@ export const obterMediaAvaliacao = async (request, response) => {
         response.status(500).json({ erro: "Erro ao obter média de avaliações", mensagem: error.message })
     }
 }
+
+export const moderarComentario = async (request, response) => {
+    try {
+        const { id } = request.params
+        const { aprovado } = request.body
+
+        if (!id) {
+            return response
+                .status(400)
+                .json({ erro: "ID inválido", mensagem: "O ID do comentário é obrigatório" })
+        }
+
+        if (typeof aprovado !== "boolean") {
+            return response
+                .status(400)
+                .json({ erro: "Aprovação inválida", mensagem: "O campo aprovado deve ser um booleano" })
+        }
+
+        const comentario = await comentarioModel.findByPk(id)
+        if (!comentario) {
+            return response
+                .status(404)
+                .json({ erro: "Comentário não encontrado", mensagem: "Nenhum comentário encontrado com este ID" })
+        }
+
+        comentario.aprovado = aprovado
+        await comentario.save()
+
+        response.status(200).json({
+            success: true,
+            data: {
+                id: comentario.id,
+                usuarioId: comentario.usuarioId,
+                receitaId: comentario.receitaId,
+                texto: comentario.texto,
+                avaliacao: comentario.avaliacao,
+                aprovado: comentario.aprovado,
+                created_at: comentario.created_at,
+                updated_at: comentario.updated_at
+            }
+        })
+    } catch (error) {
+        response.status(500).json({ erro: "Erro ao moderar comentário", mensagem: error.message })
+    }
+}

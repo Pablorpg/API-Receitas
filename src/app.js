@@ -14,6 +14,7 @@ import "./models/association.js";
 import chefRoute from "./routes/chefRoute.js";
 import receitasRoutes from "./routes/receitasRoute.js";
 import usuarioRoute from "./routes/usuarioRoute.js"
+import authRoute from "./routes/authRoute.js"
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use("/imagens", express.static(path.join(__dirname, "src/public/imagens")));
 app.use("/api/chefs", chefRoute);
 app.use("/api/receitas", receitasRoutes);
 app.use("/api/usuarios", usuarioRoute)
+app.use("/api/auth", authRoute)
 
 // Middleware de erros
 app.use(errorHandler);

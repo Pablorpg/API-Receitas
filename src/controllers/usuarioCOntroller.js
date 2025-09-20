@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken"
 
 export const registrarUsuario = async (request, response) => {
     try {
-        const { nome, email, senha, funcao } = request.body
+        const { nome, email, senha, tipoUsuario } = request.body
 
         if (!nome) {
             return response
@@ -39,10 +39,10 @@ export const registrarUsuario = async (request, response) => {
                 .json({ erro: "Campo senha inválido", mensagem: "A senha deve ter pelo menos 8 caracteres, com uma letra maiúscula, uma minúscula, um número e um caractere especial" })
         }
 
-        if (funcao && !["admin", "comun"].includes(funcao)) {
+        if (tipoUsuario && !["admin", "comun"].includes(tipoUsuario)) {
             return response
                 .status(400)
-                .json({ erro: "Campo funcao inválido", mensagem: "A função deve ser 'admin' ou 'comun'" })
+                .json({ erro: "Campo tipoUsuario inválido", mensagem: "O tipo de usuário deve ser 'admin' ou 'comun'" })
         }
 
         const usuarioExistente = await usuarioModel.findOne({ where: { email } })
@@ -56,66 +56,18 @@ export const registrarUsuario = async (request, response) => {
             nome,
             email,
             senha,
-            funcao: funcao || "comun"
+            tipoUsuario: tipoUsuario || "comun"
         })
 
         response.status(201).json({ mensagem: "Usuário registrado com sucesso!", usuario: {
             id: novoUsuario.id,
             nome: novoUsuario.nome,
             email: novoUsuario.email,
-            funcao: novoUsuario.funcao,
+            tipoUsuario: novoUsuario.tipoUsuario,
             created_at: novoUsuario.created_at
         } })
     } catch (error) {
         response.status(400).json({ erro: "Erro ao registrar usuário", mensagem: error.message })
-    }
-}
-
-export const loginUsuario = async (request, response) => {
-    try {
-        const { email, senha } = request.body
-
-        if (!email) {
-            return response
-                .status(400)
-                .json({ erro: "Campo email inválido", mensagem: "O campo email não pode ser vazio" })
-        }
-        if (typeof email !== "string" || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-            return response
-                .status(400)
-                .json({ erro: "Campo email inválido", mensagem: "O email deve ser válido" })
-        }
-
-        if (!senha) {
-            return response
-                .status(400)
-                .json({ erro: "Campo senha inválido", mensagem: "O campo senha não pode ser vazio" })
-        }
-
-        const usuario = await usuarioModel.findOne({ where: { email } })
-        if (!usuario) {
-            return response
-                .status(401)
-                .json({ erro: "Credenciais inválidas", mensagem: "Email ou senha incorretos" })
-        }
-
-        const senhaValida = await bcrypt.compare(senha, usuario.senha)
-        if (!senhaValida) {
-            return response
-                .status(401)
-                .json({ erro: "Credenciais inválidas", mensagem: "Email ou senha incorretos" })
-        }
-
-        const token = jwt.sign({ id: usuario.id }, "segredo_super_secreto", { expiresIn: "1h" })
-
-        response.status(200).json({ mensagem: "Login bem-sucedido!", token, usuario: {
-            id: usuario.id,
-            nome: usuario.nome,
-            email: usuario.email,
-            funcao: usuario.funcao
-        } })
-    } catch (error) {
-        response.status(500).json({ erro: "Erro ao fazer login", mensagem: error.message })
     }
 }
 
@@ -132,7 +84,7 @@ export const buscarPerfil = async (request, response) => {
             id: usuario.id,
             nome: usuario.nome,
             email: usuario.email,
-            funcao: usuario.funcao,
+            tipoUsuario: usuario.tipoUsuario,
             created_at: usuario.created_at,
             updated_at: usuario.updated_at
         } })
@@ -143,7 +95,7 @@ export const buscarPerfil = async (request, response) => {
 
 export const atualizarPerfil = async (request, response) => {
     try {
-        const { nome, senha, funcao } = request.body
+        const { nome, senha, tipoUsuario } = request.body
 
         const usuario = await usuarioModel.findByPk(request.userId)
         if (!usuario) {
@@ -164,15 +116,15 @@ export const atualizarPerfil = async (request, response) => {
                 .json({ erro: "Campo senha inválido", mensagem: "A senha deve ter pelo menos 8 caracteres, com uma letra maiúscula, uma minúscula, um número e um caractere especial" })
         }
 
-        if (funcao && !["admin", "comun"].includes(funcao)) {
+        if (tipoUsuario && !["admin", "comun"].includes(tipoUsuario)) {
             return response
                 .status(400)
-                .json({ erro: "Campo funcao inválido", mensagem: "A função deve ser 'admin' ou 'comun'" })
+                .json({ erro: "Campo tipoUsuario inválido", mensagem: "O tipo de usuário deve ser 'admin' ou 'comun'" })
         }
 
         usuario.nome = nome || usuario.nome
         usuario.senha = senha || usuario.senha
-        usuario.funcao = funcao || usuario.funcao
+        usuario.tipoUsuario = tipoUsuario || usuario.tipoUsuario
 
         await usuario.save()
 
@@ -180,7 +132,7 @@ export const atualizarPerfil = async (request, response) => {
             id: usuario.id,
             nome: usuario.nome,
             email: usuario.email,
-            funcao: usuario.funcao,
+            tipoUsuario: usuario.tipoUsuario,
             created_at: usuario.created_at,
             updated_at: usuario.updated_at
         } })
@@ -210,7 +162,7 @@ export const buscarUsuarioPorId = async (request, response) => {
             id: usuario.id,
             nome: usuario.nome,
             email: usuario.email,
-            funcao: usuario.funcao
+            tipoUsuario: usuario.tipoUsuario
         } })
     } catch (error) {
         response.status(500).json({ erro: "Erro ao buscar usuário", mensagem: error.message })

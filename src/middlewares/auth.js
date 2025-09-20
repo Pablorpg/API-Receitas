@@ -11,7 +11,7 @@ export const authenticateToken = (request, response, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, "segredo_super_secreto")
+        const decoded = jwt.verify(token, process.env.JWT_SECRET)
         request.userId = decoded.id
         next()
     } catch (error) {

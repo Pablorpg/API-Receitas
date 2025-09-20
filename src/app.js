@@ -3,6 +3,9 @@ import cors from "cors";
 import path from "path";
 import { conn } from "./config/sequelize.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import dotenv from "dotenv"
+
+dotenv.config()
 
 // TABELAS
 import "./models/association.js";

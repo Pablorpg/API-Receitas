@@ -40,7 +40,7 @@ const usuarioModel = conn.define(
                 }
             }
         },
-        funcao: {
+        tipoUsuario: {
             type: DataTypes.ENUM("admin", "comun"),
             defaultValue: "comun"
         }

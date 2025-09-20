@@ -74,7 +74,7 @@ export const listarFavoritas = async (request, response) => {
             include: [
                 {
                     model: receitasModel,
-                    attributes: ["id", "titulo", "ingredientes", "modoPreparo", "tempoPreparo", "porcoes", "dificuldade"]
+                    attributes: ["id", "titulo", "ingredientes", "instrucoes", "chefId", "usuarioId"]
                 }
             ]
         })
@@ -88,10 +88,9 @@ export const listarFavoritas = async (request, response) => {
                     id: favorita.receita.id,
                     titulo: favorita.receita.titulo,
                     ingredientes: favorita.receita.ingredientes,
-                    modoPreparo: favorita.receita.modoPreparo,
-                    tempoPreparo: favorita.receita.tempoPreparo,
-                    porcoes: favorita.receita.porcoes,
-                    dificuldade: favorita.receita.dificuldade
+                    instrucoes: favorita.receita.instrucoes,
+                    chefId: favorita.receita.chefId,
+                    usuarioId: favorita.receita.usuarioId
                 },
                 dataAdicionada: favorita.dataAdicionada,
                 categoria: favorita.categoria,
@@ -104,5 +103,99 @@ export const listarFavoritas = async (request, response) => {
         })
     } catch (error) {
         response.status(500).json({ erro: "Erro ao listar favoritas", mensagem: error.message })
+    }
+}
+
+export const removerFavorita = async (request, response) => {
+    try {
+        const { id } = request.params
+        const usuarioId = request.userId
+
+        if (!id) {
+            return response
+                .status(400)
+                .json({ erro: "ID inválido", mensagem: "O ID da favorita é obrigatório" })
+        }
+
+        const favorita = await favoritaModel.findByPk(id)
+        if (!favorita) {
+            return response
+                .status(404)
+                .json({ erro: "Favorita não encontrada", mensagem: "Nenhuma favorita encontrada com este ID" })
+        }
+
+        if (favorita.usuarioId !== usuarioId) {
+            return response
+                .status(403)
+                .json({ erro: "Acesso negado", mensagem: "Você não tem permissão para remover esta favorita" })
+        }
+
+        await favorita.destroy()
+
+        response.status(200).json({
+            success: true,
+            data: { mensagem: "Favorita removida com sucesso" }
+        })
+    } catch (error) {
+        response.status(500).json({ erro: "Erro ao remover favorita", mensagem: error.message })
+    }
+}
+
+export const buscarFavoritaPorId = async (request, response) => {
+    try {
+        const { id } = request.params
+        const usuarioId = request.userId
+
+        if (!id) {
+            return response
+                .status(400)
+                .json({ erro: "ID inválido", mensagem: "O ID da favorita é obrigatório" })
+        }
+
+        const favorita = await favoritaModel.findByPk(id, {
+            include: [
+                {
+                    model: receitasModel,
+                    attributes: ["id", "titulo", "ingredientes", "instrucoes", "chefId", "usuarioId"]
+                }
+            ]
+        })
+
+        if (!favorita) {
+            return response
+                .status(404)
+                .json({ erro: "Favorita não encontrada", mensagem: "Nenhuma favorita encontrada com este ID" })
+        }
+
+        if (favorita.usuarioId !== usuarioId) {
+            return response
+                .status(403)
+                .json({ erro: "Acesso negado", mensagem: "Você não tem permissão para acessar esta favorita" })
+        }
+
+        response.status(200).json({
+            success: true,
+            data: {
+                id: favorita.id,
+                usuarioId: favorita.usuarioId,
+                receita: {
+                    id: favorita.receita.id,
+                    titulo: favorita.receita.titulo,
+                    ingredientes: favorita.receita.ingredientes,
+                    instrucoes: favorita.receita.instrucoes,
+                    chefId: favorita.receita.chefId,
+                    usuarioId: favorita.receita.usuarioId
+                },
+                dataAdicionada: favorita.dataAdicionada,
+                categoria: favorita.categoria,
+                observacoes: favorita.observacoes,
+                prioridade: favorita.prioridade,
+                tentativasPreparo: favorita.tentativasPreparo,
+                created_at: favorita.created_at,
+                updated_at: favorita.updated_at
+            }
+        })
+    } catch (error) {
+        response.status(500).json({ erro: "Erro ao buscar favorita", mensagem: error.message })
     }
 }

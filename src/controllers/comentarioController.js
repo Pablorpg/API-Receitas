@@ -1,6 +1,7 @@
 import comentarioModel from "../models/comentarioModel.js"
 import receitasModel from "../models/receitasModel.js"
 import usuarioModel from "../models/usuarioModel.js"
+import { Sequelize } from "sequelize"
 
 export const criarComentario = async (request, response) => {
     try {
@@ -148,7 +149,7 @@ export const editarComentario = async (request, response) => {
 
         comentario.texto = texto || comentario.texto
         comentario.avaliacao = avaliacao || comentario.avaliacao
-        comentario.aprovado = false // Resetar aprovação após edição
+        comentario.aprovado = false
         await comentario.save()
 
         response.status(200).json({
@@ -240,5 +241,45 @@ export const listarComentariosUsuario = async (request, response) => {
         })
     } catch (error) {
         response.status(500).json({ erro: "Erro ao listar comentários", mensagem: error.message })
+    }
+}
+
+export const obterMediaAvaliacao = async (request, response) => {
+    try {
+        const { id } = request.params
+
+        if (!id) {
+            return response
+                .status(400)
+                .json({ erro: "ID inválido", mensagem: "O ID da receita é obrigatório" })
+        }
+
+        const receita = await receitasModel.findByPk(id)
+        if (!receita) {
+            return response
+                .status(404)
+                .json({ erro: "Receita não encontrada", mensagem: "Nenhuma receita encontrada com este ID" })
+        }
+
+        const resultado = await comentarioModel.findAll({
+            where: { receitaId: id, aprovado: true },
+            attributes: [
+                [Sequelize.fn("AVG", Sequelize.col("avaliacao")), "media"],
+                [Sequelize.fn("COUNT", Sequelize.col("avaliacao")), "total"]
+            ]
+        })
+
+        const media = parseFloat(resultado[0].getDataValue("media")) || 0
+        const total = parseInt(resultado[0].getDataValue("total")) || 0
+
+        response.status(200).json({
+            success: true,
+            data: {
+                media: Number(media.toFixed(2)),
+                total
+            }
+        })
+    } catch (error) {
+        response.status(500).json({ erro: "Erro ao obter média de avaliações", mensagem: error.message })
     }
 }

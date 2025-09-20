@@ -31,8 +31,12 @@ const usuarioModel = conn.define(
             allowNull: false,
             validate: {
                 len: {
-                    args: [6, 100],
-                    msg: "Senha deve ter pelo menos 6 caracteres"
+                    args: [8, 100],
+                    msg: "Senha deve ter pelo menos 8 caracteres"
+                },
+                is: {
+                    args: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                    msg: "Senha deve conter pelo menos uma letra maiúscula, uma minúscula, um número e um caractere especial"
                 }
             }
         },

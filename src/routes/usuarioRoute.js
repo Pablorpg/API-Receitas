@@ -1,10 +1,13 @@
 import { Router } from "express"
-import { registrarUsuario, buscarPerfil, atualizarPerfil } from "../controllers/usuarioController.js"
+import { registrarUsuario, loginUsuario, buscarPerfil, atualizarPerfil, buscarUsuarioPorId } from "../controllers/usuarioController.js"
+import { authenticateToken } from "../middlewares/auth.js"
 
 const router = Router()
 
 router.post("/registro", registrarUsuario)
-router.get("/perfil", buscarPerfil)
-router.put("/perfil", atualizarPerfil)
+router.post("/login", loginUsuario)
+router.get("/perfil", authenticateToken, buscarPerfil)
+router.put("/perfil", authenticateToken, atualizarPerfil)
+router.get("/:id", buscarUsuarioPorId)
 
 export default router

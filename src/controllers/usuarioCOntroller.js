@@ -1,4 +1,6 @@
 import usuarioModel from "../models/usuarioModel.js"
+import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken"
 
 export const registrarUsuario = async (request, response) => {
     try {
@@ -31,10 +33,10 @@ export const registrarUsuario = async (request, response) => {
                 .status(400)
                 .json({ erro: "Campo senha inválido", mensagem: "O campo senha não pode ser vazio" })
         }
-        if (typeof senha !== "string" || senha.length < 6) {
+        if (typeof senha !== "string" || !senha.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/)) {
             return response
                 .status(400)
-                .json({ erro: "Campo senha inválido", mensagem: "A senha deve ter pelo menos 6 caracteres" })
+                .json({ erro: "Campo senha inválido", mensagem: "A senha deve ter pelo menos 8 caracteres, com uma letra maiúscula, uma minúscula, um número e um caractere especial" })
         }
 
         if (funcao && !["admin", "comun"].includes(funcao)) {
@@ -69,9 +71,9 @@ export const registrarUsuario = async (request, response) => {
     }
 }
 
-export const buscarPerfil = async (request, response) => {
+export const loginUsuario = async (request, response) => {
     try {
-        const { email } = request.body
+        const { email, senha } = request.body
 
         if (!email) {
             return response
@@ -84,11 +86,46 @@ export const buscarPerfil = async (request, response) => {
                 .json({ erro: "Campo email inválido", mensagem: "O email deve ser válido" })
         }
 
+        if (!senha) {
+            return response
+                .status(400)
+                .json({ erro: "Campo senha inválido", mensagem: "O campo senha não pode ser vazio" })
+        }
+
         const usuario = await usuarioModel.findOne({ where: { email } })
         if (!usuario) {
             return response
+                .status(401)
+                .json({ erro: "Credenciais inválidas", mensagem: "Email ou senha incorretos" })
+        }
+
+        const senhaValida = await bcrypt.compare(senha, usuario.senha)
+        if (!senhaValida) {
+            return response
+                .status(401)
+                .json({ erro: "Credenciais inválidas", mensagem: "Email ou senha incorretos" })
+        }
+
+        const token = jwt.sign({ id: usuario.id }, "segredo_super_secreto", { expiresIn: "1h" })
+
+        response.status(200).json({ mensagem: "Login bem-sucedido!", token, usuario: {
+            id: usuario.id,
+            nome: usuario.nome,
+            email: usuario.email,
+            funcao: usuario.funcao
+        } })
+    } catch (error) {
+        response.status(500).json({ erro: "Erro ao fazer login", mensagem: error.message })
+    }
+}
+
+export const buscarPerfil = async (request, response) => {
+    try {
+        const usuario = await usuarioModel.findByPk(request.userId)
+        if (!usuario) {
+            return response
                 .status(404)
-                .json({ erro: "Usuário não encontrado", mensagem: "Nenhum usuário encontrado com este email" })
+                .json({ erro: "Usuário não encontrado", mensagem: "Nenhum usuário encontrado com este ID" })
         }
 
         response.status(200).json({ mensagem: "Perfil encontrado!", usuario: {
@@ -106,24 +143,13 @@ export const buscarPerfil = async (request, response) => {
 
 export const atualizarPerfil = async (request, response) => {
     try {
-        const { email, nome, senha, funcao } = request.body
+        const { nome, senha, funcao } = request.body
 
-        if (!email) {
-            return response
-                .status(400)
-                .json({ erro: "Campo email inválido", mensagem: "O campo email não pode ser vazio" })
-        }
-        if (typeof email !== "string" || !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-            return response
-                .status(400)
-                .json({ erro: "Campo email inválido", mensagem: "O email deve ser válido" })
-        }
-
-        const usuario = await usuarioModel.findOne({ where: { email } })
+        const usuario = await usuarioModel.findByPk(request.userId)
         if (!usuario) {
             return response
                 .status(404)
-                .json({ erro: "Usuário não encontrado", mensagem: "Nenhum usuário encontrado com este email" })
+                .json({ erro: "Usuário não encontrado", mensagem: "Nenhum usuário encontrado com este ID" })
         }
 
         if (nome && (typeof nome !== "string" || nome.length < 3 || nome.length > 100)) {
@@ -132,10 +158,10 @@ export const atualizarPerfil = async (request, response) => {
                 .json({ erro: "Campo nome inválido", mensagem: "O nome deve ser uma string com 3 a 100 caracteres" })
         }
 
-        if (senha && (typeof senha !== "string" || senha.length < 6)) {
+        if (senha && (typeof senha !== "string" || !senha.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/))) {
             return response
                 .status(400)
-                .json({ erro: "Campo senha inválido", mensagem: "A senha deve ter pelo menos 6 caracteres" })
+                .json({ erro: "Campo senha inválido", mensagem: "A senha deve ter pelo menos 8 caracteres, com uma letra maiúscula, uma minúscula, um número e um caractere especial" })
         }
 
         if (funcao && !["admin", "comun"].includes(funcao)) {
@@ -160,5 +186,33 @@ export const atualizarPerfil = async (request, response) => {
         } })
     } catch (error) {
         response.status(500).json({ erro: "Erro ao atualizar perfil", mensagem: error.message })
+    }
+}
+
+export const buscarUsuarioPorId = async (request, response) => {
+    try {
+        const { id } = request.params
+
+        if (!id) {
+            return response
+                .status(400)
+                .json({ erro: "Id inválido", mensagem: "O ID não pode ser vazio" })
+        }
+
+        const usuario = await usuarioModel.findByPk(id)
+        if (!usuario) {
+            return response
+                .status(404)
+                .json({ erro: "Usuário não encontrado", mensagem: "Nenhum usuário encontrado com este ID" })
+        }
+
+        response.status(200).json({ mensagem: "Usuário encontrado!", usuario: {
+            id: usuario.id,
+            nome: usuario.nome,
+            email: usuario.email,
+            funcao: usuario.funcao
+        } })
+    } catch (error) {
+        response.status(500).json({ erro: "Erro ao buscar usuário", mensagem: error.message })
     }
 }

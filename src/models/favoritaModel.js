@@ -1,7 +1,8 @@
 import { DataTypes } from "sequelize"
 import { conn } from "../config/sequelize.js"
 import usuarioModel from "./usuarioModel.js"
-import receitaModel from "./receitaModel.js"
+import receitasModel from "./receitasModel.js"
+
 
 const favoritaModel = conn.define(
     "favoritas",
@@ -23,7 +24,7 @@ const favoritaModel = conn.define(
             type: DataTypes.UUID,
             allowNull: false,
             references: {
-                model: receitaModel,
+                model: receitasModel,
                 key: "id"
             }
         },
@@ -64,8 +65,8 @@ const favoritaModel = conn.define(
 )
 
 favoritaModel.belongsTo(usuarioModel, { foreignKey: "usuarioId" })
-favoritaModel.belongsTo(receitaModel, { foreignKey: "receitaId" })
+favoritaModel.belongsTo(receitasModel, { foreignKey: "receitaId" })
 usuarioModel.hasMany(favoritaModel, { foreignKey: "usuarioId" })
-receitaModel.hasMany(favoritaModel, { foreignKey: "receitaId" })
+receitasModel.hasMany(favoritaModel, { foreignKey: "receitaId" })
 
 export default favoritaModel

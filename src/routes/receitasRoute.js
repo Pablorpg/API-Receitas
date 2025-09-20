@@ -1,15 +1,13 @@
 import { Router } from "express"
-import { criarReceita, listarReceitas, buscarReceitaPorId, atualizarReceita, deletarReceita, uploadImagem } from "../controllers/receitasController.js"
-import { imageUpload } from "../middlewares/imageUpload.js"
+import { criarReceita, listarReceitas, buscarReceitaPorId, atualizarReceita, deletarReceita } from "../controllers/receitasController.js"
+import { authenticateToken, restrictToAdmin } from "../middlewares/auth.js"
 
 const router = Router()
 
-router.post("/", criarReceita)
+router.post("/", authenticateToken, criarReceita)
 router.get("/", listarReceitas)
 router.get("/:id", buscarReceitaPorId)
-router.put("/:id", atualizarReceita)
-router.delete("/:id", deletarReceita)
-
-router.post("/:id/imagem", imageUpload.single("image"), uploadImagem)
+router.put("/:id", authenticateToken, restrictToAdmin, atualizarReceita)
+router.delete("/:id", authenticateToken, restrictToAdmin, deletarReceita)
 
 export default router

@@ -149,3 +149,28 @@ export const refreshToken = async (request, response) => {
         response.status(500).json({ erro: "Erro ao renovar token", mensagem: error.message })
     }
 }
+
+export const verificarToken = async (request, response) => {
+    try {
+        const usuario = await usuarioModel.findByPk(request.userId)
+        if (!usuario) {
+            return response
+                .status(401)
+                .json({ erro: "Usuário não encontrado", mensagem: "Token inválido" })
+        }
+
+        response.status(200).json({
+            success: true,
+            data: {
+                user: {
+                    id: usuario.id,
+                    nome: usuario.nome,
+                    email: usuario.email,
+                    tipoUsuario: usuario.tipoUsuario
+                }
+            }
+        })
+    } catch (error) {
+        response.status(500).json({ erro: "Erro ao verificar token", mensagem: error.message })
+    }
+}

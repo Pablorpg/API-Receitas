@@ -1,6 +1,5 @@
 import usuarioModel from "../models/usuarioModel.js"
 import bcrypt from "bcrypt"
-import jwt from "jsonwebtoken"
 
 export const registrarUsuario = async (request, response) => {
     try {
@@ -43,6 +42,12 @@ export const registrarUsuario = async (request, response) => {
             return response
                 .status(400)
                 .json({ erro: "Campo tipoUsuario inválido", mensagem: "O tipo de usuário deve ser 'admin' ou 'comun'" })
+        }
+
+        if (tipoUsuario === "admin" && request.tipoUsuario !== "admin") {
+            return response
+                .status(403)
+                .json({ erro: "Acesso negado", mensagem: "Apenas administradores podem criar usuários admin" })
         }
 
         const usuarioExistente = await usuarioModel.findOne({ where: { email } })
@@ -120,6 +125,12 @@ export const atualizarPerfil = async (request, response) => {
             return response
                 .status(400)
                 .json({ erro: "Campo tipoUsuario inválido", mensagem: "O tipo de usuário deve ser 'admin' ou 'comun'" })
+        }
+
+        if (tipoUsuario && tipoUsuario !== usuario.tipoUsuario && request.tipoUsuario !== "admin") {
+            return response
+                .status(403)
+                .json({ erro: "Acesso negado", mensagem: "Apenas administradores podem alterar o tipo de usuário" })
         }
 
         usuario.nome = nome || usuario.nome

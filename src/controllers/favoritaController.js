@@ -19,6 +19,15 @@ export const adicionarFavorita = async (request, response) => {
                 .json({ erro: "Receita não encontrada", mensagem: "Nenhuma receita encontrada com este ID" })
         }
 
+        const favoritaExistente = await favoritaModel.findOne({
+            where: { usuarioId, receitaId }
+        })
+        if (favoritaExistente) {
+            return response
+                .status(409)
+                .json({ erro: "Receita já favoritada", mensagem: "Esta receita já está nos favoritos do usuário" })
+        }
+
         if (categoria && (typeof categoria !== "string" || categoria.length > 50)) {
             return response
                 .status(400)

@@ -16,6 +16,7 @@ import receitasRoutes from "./routes/receitasRoute.js";
 import usuarioRoute from "./routes/usuarioRoute.js"
 import authRoute from "./routes/authRoute.js"
 import favoritaRoute from "./routes/favoritaRoute.js"
+import comentarioRoute from "./routes/comentarioRoute.js"
 
 const app = express();
 
@@ -36,6 +37,8 @@ app.use("/api/receitas", receitasRoutes);
 app.use("/api/usuarios", usuarioRoute)
 app.use("/api/auth", authRoute)
 app.use("/api/favoritas", favoritaRoute)
+app.use("/api/comentarios", comentarioRoute)
+
 
 // Middleware de erros
 app.use(errorHandler);
